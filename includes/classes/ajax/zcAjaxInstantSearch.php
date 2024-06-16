@@ -1,4 +1,4 @@
-<?php
+<?php //steve for POSM
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -228,7 +228,10 @@ class zcAjaxInstantSearch extends base
                 $name  = $result['products_name'];
                 $img   = $result['products_image'];
                 $model = $result['products_model'];
-
+//steve if a pos model was found, use that as the displayed/highlighted model
+                if (!empty($result['pos_model'])) {
+                    $model = $result['pos_model'];
+                }
                 $dropdownResult['link']  = zen_href_link(zen_get_info_page($id), 'products_id=' . $id);
                 $dropdownResult['model'] = INSTANT_SEARCH_DROPDOWN_DISPLAY_PRODUCT_MODEL === 'true'
                     ? $this->highlightSearchWords($model)
