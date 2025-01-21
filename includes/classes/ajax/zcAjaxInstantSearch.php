@@ -1,4 +1,5 @@
 <?php
+// torvista added null type
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -54,7 +55,8 @@ class zcAjaxInstantSearch extends base
      *
      * @param InstantSearch|null $instantSearch
      */
-    public function __construct(InstantSearch $instantSearch = null)
+//torvista added null type
+    public function __construct(?InstantSearch $instantSearch = null)
     {
         $this->results = [];
         $this->logger = new InstantSearchLogger('instantsearch-ajax');
