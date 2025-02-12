@@ -1,4 +1,6 @@
 <?php
+// torvista note: this installer should be rewritten using the proscribed methods as detailed in \includes\classes\PluginSupport\ScriptedInstaller.php
+// torvista hint removed
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -24,7 +26,8 @@ class ScriptedInstaller extends ScriptedInstallBase
      * @param string $oldVersion
      * @return bool
      */
-    public function doUpgrade(string $oldVersion = ''): bool
+    //torvista removed hint to allow installer to continue: TEMPORARY FIX
+    public function doUpgrade($oldVersion = ''): bool
     {
         if ($oldVersion === '') {
             return false;
