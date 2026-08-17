@@ -1,3 +1,5 @@
+# 2026: This was originally forked from a repository at https://github.com/marco-pm, but that has now disappeared...
+
 # Instant Search plugin 4.0 for Zen Cart 1.5.7 and 1.5.8
 Show autocomplete search results while the user is typing. Show relevant search results in a listing page with 
 infinite scroll.
