@@ -5,6 +5,7 @@
  * @version  4.0.3
  * @see      https://github.com/marco-pm/zencart_instantsearch
  * @license  GNU Public License V2.0
+ * @updated 25/08/2026 torvista
  */
 
 use Zencart\PluginSupport\ScriptedInstaller as ScriptedInstallBase;
@@ -21,10 +22,10 @@ class ScriptedInstaller extends ScriptedInstallBase
     /**
      * Upgrade the plugin to the new version.
      *
-     * @param string $oldVersion
+     * @param $oldVersion
      * @return bool
      */
-    public function doUpgrade(string $oldVersion = ''): bool
+    public function doUpgrade($oldVersion = ''): bool
     {
         if ($oldVersion === '') {
             return false;
