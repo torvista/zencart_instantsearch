@@ -1,4 +1,5 @@
 <?php
+//torvista added null type
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -30,6 +31,7 @@ interface SearchEngineProviderInterface
         int $productsLimit,
         int $categoriesLimit = 0,
         int $manufacturersLimit = 0,
-        int $alphaFilter = null
+        //torvista added null type
+        ?int $alphaFilter = null
     ): array;
 }

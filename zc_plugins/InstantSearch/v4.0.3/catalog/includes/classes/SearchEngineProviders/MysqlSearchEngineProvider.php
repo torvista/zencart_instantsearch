@@ -1,4 +1,5 @@
-<?php
+<?php  //steve for POSM and for debugging
+//torvista added null ?
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -13,6 +14,9 @@ namespace Zencart\Plugins\Catalog\InstantSearch\SearchEngineProviders;
 
 class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInterface
 {
+//steve create/update a logfile for each parse
+    protected bool $debugInstantSearch = false;
+// eof
     /**
      * Array of product fields (keys) with the corresponding sql build method (values).
      *
@@ -22,7 +26,10 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
         'category'         => ['buildSqlProductCategory'],
         'manufacturer'     => ['buildSqlProductManufacturer'],
         'meta-keywords'    => ['buildSqlProductMetaKeywords'],
-        'model-broad'      => ['buildSqlProductModelBroad'],
+//steve added POSM
+        'model-broad'      => ['buildSqlProductModelBroadPOSM',
+                               'buildSqlProductModelBroad'],
+//eof
         'model-exact'      => ['buildSqlProductModelExact'],
         'name'             => ['buildSqlProductNameBegins',
                                'buildSqlProductNameWithoutDescription',
@@ -63,6 +70,9 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
         $this->useQueryExpansion = $useQueryExpansion;
         $this->alphaFilter = null;
         $this->results = [];
+//steve debug
+        if ($this->debugInstantSearch) $this->logInstantSearch('_construct', true);
+//eof
     }
 
     /**
@@ -82,14 +92,28 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
         int $productsLimit,
         int $categoriesLimit = 0,
         int $manufacturersLimit = 0,
-        int $alphaFilter = null
+        //torvista null type
+        ?int $alphaFilter = null
     ): array {
         $this->alphaFilter = $alphaFilter ?? 0;
 
         $sqlSequence = $this->buildSqlSequence($productFieldsList);
 
+        //steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+            $sequence_count = 1;
+        }
+//eof
+
         // Run the sequence of database queries for products, until we have enough results
         foreach ($sqlSequence as $sql) {
+//steve debug
+            if ($this->debugInstantSearch) {
+                $this->logInstantSearch(__LINE__ . ' $sqlSequence ' . $sequence_count . "\n" . '$sql="' . $sql .'"' . PHP_EOL);
+                $sequence_count++;
+            }
+//eof
             if (count($this->results) >= $productsLimit) {
                 break;
             }
@@ -126,14 +150,28 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlSequence(array $productFieldsList): array
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         $sqlSequence = [];
 
         foreach ($productFieldsList as $field) {
             foreach (static::FIELDS_TO_BUILD_METHODS[$field] as $buildMethod) {
+                //steve debug
+                if ($this->debugInstantSearch) {
+                    $this->logInstantSearch(__LINE__ . ' $field=' . $field . "\n" . '$buildMethod=' . $buildMethod . PHP_EOL);
+                }
+//eof
                 $sqlSequence[] = $this->$buildMethod();
             }
         }
-
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' $sqlSequence=' . print_r($sqlSequence, true) . PHP_EOL);
+        }
+//eof
         return $sqlSequence;
     }
 
@@ -149,6 +187,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
     {
         global $db;
 
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         $foundIds = implode(',', array_column($this->results, 'products_id'));
 
         $searchQueryPreg = preg_replace('/\s+/', ' ', preg_quote($queryText, '&'));
@@ -166,15 +209,36 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
         $sql = $db->bindVars($sql, ':foundIds', $foundIds ?? "''", 'inConstructInteger');
         $sql = $db->bindVars($sql, ':alphaFilter', chr($this->alphaFilter) . '%', 'string');
         $sql = $db->bindVars($sql, ':resultsLimit', $limit, 'integer');
+//steve added
+        $sql = $db->bindVars($sql, ':searchLikeQuery', '%' . $queryText . '%', 'string');
+//eof
 
         $this->notify('NOTIFY_INSTANT_SEARCH_MYSQL_PRODUCTS_BEFORE_SQL', $queryText, $sql, $limit, $this->alphaFilter);
+//steve debug
+        if ($this->debugInstantSearch) {
+            $debugInfo =
+                '$queryText="' . $queryText . '"' . PHP_EOL .
+                '$sql=' . $sql . PHP_EOL .
+                '$limit=' . $limit . PHP_EOL .
+                '$this->alphaFilter=' . $this->alphaFilter;
+            $this->logInstantSearch($debugInfo);
+        }
+//eof
 
         // Run the sql
         $dbResults = $db->Execute($sql);
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch($dbResults->RecordCount() . ' results from query' . PHP_EOL . '-------------------------' . PHP_EOL);
+        }
+//eof
 
         // Save the results
         $results = [];
         foreach ($dbResults as $dbResult) {
+//steve debug
+            if ($this->debugInstantSearch) $this->logInstantSearch(print_r($dbResult, true) . PHP_EOL);
+//eof
             $results[] = $dbResult;
         }
 
@@ -190,13 +254,18 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
     protected function buildSqlProductNameDescription(bool $includeDescription = true): string
     {
         $queryExpansion = $this->useQueryExpansion === true ? ' WITH QUERY EXPANSION' : '';
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . ': $includeDescription=' . $includeDescription . ', $queryExpansion=' . $queryExpansion . ', '. PHP_EOL);
+        }
+//eof
 
+//steve removed boolean stuff from query, changed search term to searchLikeQuery which has % % around it
         return "
             SELECT
                 p.*,
                 pd.products_name,
                 m.manufacturers_name,
-                MATCH(pd.products_name) AGAINST(:searchBooleanQuery IN BOOLEAN MODE) AS name_relevance_boolean,
                 MATCH(pd.products_name) AGAINST(:searchQuery " . $queryExpansion . ") AS name_relevance_natural " .
                 ($includeDescription === true ? ", MATCH(pd.products_description) AGAINST(:searchQuery " . $queryExpansion . ") AS description_relevance " : "") . "
             FROM
@@ -209,11 +278,10 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
                 AND pd.language_id = :languageId
                 AND p.products_id NOT IN (:foundIds)
                 AND (
-                    ( MATCH(pd.products_name) AGAINST(:searchBooleanQuery IN BOOLEAN MODE) + MATCH(pd.products_name) AGAINST(:searchQuery " . $queryExpansion . ") ) > 0 " .
-                    ($includeDescription === true ? " OR MATCH(pd.products_description) AGAINST(:searchQuery " . $queryExpansion . ") > 0 " : "") . "
+                    (pd.products_name LIKE :searchLikeQuery)" .
+                    ($includeDescription === true ? " OR pd.products_description LIKE :searchLikeQuery " . $queryExpansion : "") . "
                 )
             ORDER BY
-                name_relevance_boolean DESC,
                 name_relevance_natural DESC,
                 " . ($includeDescription === true ? " description_relevance DESC, " : "") . "
                 p.products_sort_order,
@@ -251,6 +319,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlProductName(bool $beginsWith = true): string
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . ': $beginsWith=' . $beginsWith . ' (' . gettype($beginsWith) . ')' . PHP_EOL);
+        }
+//eof
         return "
             SELECT
                 p.*,
@@ -315,6 +388,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlProductModel(bool $exactMatch = true): string
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . ': $exactMatch=' . $exactMatch . PHP_EOL);
+        }
+//eof
         return "
             SELECT
                 p.*,
@@ -378,6 +456,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlProductMetaKeywords(): string
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         return "
             SELECT
                 p.*,
@@ -425,6 +508,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlProductCategory(): string
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         // recursive if mysql 8
         return "
             SELECT
@@ -471,6 +559,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
      */
     protected function buildSqlProductManufacturer(): string
     {
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         return "
             SELECT
                 p.*,
@@ -517,7 +610,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
     protected function searchCategories(string $queryText, int $limit): array
     {
         global $db;
-
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
         $searchQueryPreg = preg_replace('/\s+/', ' ', preg_quote($queryText, '&'));
         $searchQueryRegexp = str_replace(' ', '|', $searchQueryPreg);
 
@@ -566,6 +663,11 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
     protected function searchManufacturers(string $queryText, int $limit): array
     {
         global $db;
+//steve debug
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+//eof
 
         $searchQueryPreg = preg_replace('/\s+/', ' ', preg_quote($queryText, '&'));
         $searchQueryRegexp = str_replace(' ', '|', $searchQueryPreg);
@@ -600,5 +702,66 @@ class MysqlSearchEngineProvider extends \base implements SearchEngineProviderInt
         }
 
         return $results;
+    }
+//steve debug
+    /** debugging log
+     * @param $message
+     * @param bool $clearLog
+     * @return string
+     */
+    protected function logInstantSearch($message, bool $clearLog = false): string
+    {
+        $logfilename = DIR_FS_LOGS . '/InstantSearch_debug.log';
+        $mode = $clearLog ? 'wb' : 'ab'; // wb: wipe file, binary mode. ab: append, binary mode
+        date_default_timezone_set('Europe/Madrid');
+        $fp = fopen($logfilename, $mode);
+        if ($fp) {
+            fwrite($fp, ($clearLog ? date('d/m/Y H:i:s') : $message) . "\n");
+            fclose($fp);
+        }
+        return $logfilename;
+    }
+//search in POSM table for model
+    protected function buildSqlProductModelBroadPOSM(): string
+    {
+        if ($this->debugInstantSearch) {
+            $this->logInstantSearch(__LINE__ . ' fn ' . __FUNCTION__ . PHP_EOL);
+        }
+
+        if (!defined('TABLE_PRODUCTS_OPTIONS_STOCK'))
+        {
+            define('TABLE_PRODUCTS_OPTIONS_STOCK', DB_PREFIX . 'products_options_stock');
+        }
+        if (!defined('TABLE_PRODUCTS_OPTIONS_STOCK_ATTRIBUTES'))
+        {
+            define('TABLE_PRODUCTS_OPTIONS_STOCK_ATTRIBUTES', DB_PREFIX . 'products_options_stock_attributes');
+        }
+        if (!defined('TABLE_PRODUCTS_OPTIONS_STOCK_NAMES'))
+        {
+            define('TABLE_PRODUCTS_OPTIONS_STOCK_NAMES', DB_PREFIX . 'products_options_stock_names');
+        }
+        return "
+        SELECT
+            p.products_id, p.products_image, p.products_model, p.master_categories_id, p.manufacturers_id,
+            pd.products_name,
+            m.manufacturers_name,
+            MAX(posm.pos_model) as pos_model
+            FROM products p
+             LEFT JOIN " . TABLE_MANUFACTURERS . " m ON (m.manufacturers_id = p.manufacturers_id)
+             LEFT JOIN " . TABLE_PRODUCTS_OPTIONS_STOCK . " posm ON (posm.products_id = p.products_id)
+             LEFT JOIN " . TABLE_PRODUCTS_DESCRIPTION . " pd ON (pd.products_id = p.products_id)
+             WHERE
+                pd.language_id = :languageId
+             AND
+                p.products_status = 1
+             AND
+                posm.pos_model LIKE :searchLikeQuery
+             GROUP BY
+             p.products_id, p.products_image, p.products_model, p.master_categories_id,p.manufacturers_id,
+             pd.products_name,
+             m.manufacturers_name
+             ORDER BY posm.pos_model DESC
+             LIMIT :resultsLimit
+               ";
     }
 }

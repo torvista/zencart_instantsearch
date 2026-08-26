@@ -1,4 +1,5 @@
 <?php
+//torvista added null type
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
@@ -35,7 +36,8 @@ class InstantSearchLogger
      * @param Exception|null $e
      * @return void
      */
-    public function writeErrorLog(string $message, Exception $e = null): void
+    //torvista add null type
+    public function writeErrorLog(string $message, ?Exception $e = null): void
     {
         $fullLogName = DIR_FS_LOGS . "/" . $this->logName . "-error-" . date('Y-m-d') . ".log";
         $logLine = date('Y-m-d H:i:s') . " [ERROR] $message" . PHP_EOL;
