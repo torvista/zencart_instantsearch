@@ -1,11 +1,15 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
  * @version  4.0.3
  * @see      https://github.com/marco-pm/zencart_instantsearch
  * @license  GNU Public License V2.0
- * @updated 25/08/2026 torvista
+ * @updated  26/08/2026 torvista
+ * @link     https://github.com/torvista/zencart_instantsearch
  */
 
 use Zencart\PluginSupport\ScriptedInstaller as ScriptedInstallBase;
@@ -95,7 +99,7 @@ class ScriptedInstaller extends ScriptedInstallBase
                         1
                     )
             ");
-            $configurationGroupId = (int)($this->dbConn->Insert_ID());
+            $configurationGroupId = (int)($this->dbConn->insert_ID());
             $this->executeInstallerSql("
                 UPDATE
                     " . TABLE_CONFIGURATION_GROUP . "
@@ -286,9 +290,9 @@ class ScriptedInstaller extends ScriptedInstallBase
      */
     public function restorePreviousConfigurationValues(int $configurationGroupId, string $oldPluginVersion = ''): void
     {
-        if (strpos($oldPluginVersion, 'v2') === 0 || strpos($oldPluginVersion, 'v3') === 0) {
+        if (str_starts_with($oldPluginVersion, 'v2') || str_starts_with($oldPluginVersion, 'v3')) {
             // some old settings have different names than v4's
-            if (strpos($oldPluginVersion, 'v2') === 0) {
+            if (str_starts_with($oldPluginVersion, 'v2')) {
                 $oldSettingNames = [
                     'INSTANT_SEARCH_DROPDOWN_MAX_PRODUCTS'                => 'INSTANT_SEARCH_MAX_NUMBER_OF_RESULTS',
                     'INSTANT_SEARCH_DROPDOWN_MIN_WORDSEARCH_LENGTH'       => 'INSTANT_SEARCH_MIN_WORDSEARCH_LENGTH',

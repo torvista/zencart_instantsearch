@@ -1,14 +1,16 @@
 <?php
-//torvista added null type
+
+declare(strict_types=1);
+
 /**
  * @package  Instant Search Plugin for Zen Cart
  * @author   marco-pm
  * @version  4.0.3
  * @see      https://github.com/marco-pm/zencart_instantsearch
  * @license  GNU Public License V2.0
+ * @updated  26/08/2026 torvista
+ * @link     https://github.com/torvista/zencart_instantsearch
  */
-
-declare(strict_types=1);
 
 namespace Zencart\Plugins\Catalog\InstantSearch;
 
@@ -59,7 +61,6 @@ abstract class InstantSearch extends \base
         int $productsLimit,
         int $categoriesLimit = 0,
         int $manufacturersLimit = 0,
-        //torvista added null type
         ?int $alphaFilter = null,
         bool $addToSearchLog = false,
         string $searchLogPrefix = ''

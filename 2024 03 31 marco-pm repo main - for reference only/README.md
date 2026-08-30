@@ -1,11 +1,6 @@
-# 2026: This was originally forked from a repository at https://github.com/marco-pm, but that has now disappeared...
-
-# Instant Search plugin 4.0.3 for Zen Cart 2.2.2
+# Instant Search plugin 4.0 for Zen Cart 1.5.7 and 1.5.8
 Show autocomplete search results while the user is typing. Show relevant search results in a listing page with 
 infinite scroll.
-
-## 26/08/2026
-Reworked for compatibility with ZC 2.2.2 (and php8.5, strict_mode and misc IDE recommendations).
 
 # Features
 This plugin uses a combination of MySQL Full-Text Search and LIKE/REGEXP queries to quickly find and sort products, 
@@ -41,8 +36,8 @@ These add to the features and improvements of version 3.0:
 There are no modifications to Zen Cart core files.
 
 # Prerequisites
-- Zen Cart 2.2.0
-- PHP 8.2 through 8.5
+- Zen Cart 1.5.7 or 1.5.8
+- PHP 7.4 through 8.2
 
 # Installation, use and FAQs
 See the [readme.html](https://htmlpreview.github.io/?https://github.com/marco-pm/zencart_instantsearch/blob/main/readme.html).
